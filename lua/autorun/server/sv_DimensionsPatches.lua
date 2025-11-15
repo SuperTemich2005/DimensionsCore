@@ -447,7 +447,7 @@ function Glide.FireBullet(params,traceFilter)
     glideFireBulletBase(params,modifiedFilter)
 end
 
---[[ local baseEyeTrace = FindMetaTable("Player").GetEyeTrace
+local baseEyeTrace = FindMetaTable("Player").GetEyeTrace
 FindMetaTable("Player").GetEyeTrace = function(self)
     local trace = util.TraceLine({
         start = self:EyePos(),
@@ -459,4 +459,4 @@ FindMetaTable("Player").GetEyeTrace = function(self)
         end
     })
     return trace
-end ]]
+end
