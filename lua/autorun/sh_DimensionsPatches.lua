@@ -49,3 +49,24 @@ hook.Add("PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensional Enti
         end
     end)
 end)
+
+local baseTraceLine = util.TraceLine
+util.TraceLine = function(traceData)
+    local baseFilter = traceData.filter
+    traceData.filter = function(ent)
+        local returnValue = false
+        if IsValid(baseFilter) then
+            if type(baseFilter) == "table" then
+                returnValue = not table.HasValue(baseFilter,ent) -- Set returnValue to be true if ent is not in baseFilter (table)
+            elseif type(baseFilter) == "Entity" then
+                returnValue = baseFilter ~= ent -- Set returnValue to be true if ent is not baseFilter (entity)
+            end
+        end
+        if returnValue then -- If we detect that a trace might hit, we then check for dimensions
+            if ent:GetDimension() ~= Whatever?:GetDimension() then
+                returnValue = false
+            end
+        end
+        return returnValue
+    end
+end

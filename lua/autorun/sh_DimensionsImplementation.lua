@@ -96,11 +96,13 @@ if SERVER then
             if not IsValid(ent) then return end
             if ent:GetDimension() ~= nil then return end
 
-            if IsValid(ent:GetOwner()) or IsValid(ent:CPPIGetOwner()) then
+            if IsValid(ent:GetOwner()) or IsValid(ent:CPPIGetOwner()) or IsValid(ent:GetCreator()) then
                 if IsValid(ent:CPPIGetOwner()) then
                     ent:SetDimension(ent:CPPIGetOwner():GetDimension())
                 elseif IsValid(ent:GetOwner()) then
                     ent:SetDimension(ent:GetOwner():GetDimension())
+                elseif IsValid(ent:GetCreator()) then
+                    ent:SetDimension(ent:GetCreator():GetDimension())
                 end
             else
                 ent:SetDimension(DEFAULT_DIMENSION)

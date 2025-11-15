@@ -88,17 +88,22 @@ local function ranger(self, rangertype, range, p1, p2, hulltype, mins, maxs, tra
 		filter    = filter,
 		whitelist = whitelist
 	}
-    local oldFilter = tracedata.filter
+    local baseFilter = tracedata.filter
     tracedata.filter = function(ent)
-        if IsValid(oldFilter) then
-            if type(oldFilter) == "table" then
-                return not table.HasValue(oldFilter,ent)
-            end
-            if type(oldFilter) == "Entity" then
-                return oldFilter ~= ent
+        local returnValue = false
+        if IsValid(baseFilter) then
+            if type(baseFilter) == "table" then
+                returnValue = not table.HasValue(baseFilter,ent) -- Set returnValue to be true if ent is not in baseFilter (table)
+            elseif type(baseFilter) == "Entity" then
+                returnValue = baseFilter ~= ent -- Set returnValue to be true if ent is not baseFilter (entity)
             end
         end
-        return chip:GetDimension() == ent:GetDimension()
+        if returnValue then -- If we detect that a trace might hit, we then check for dimensions
+            if ent:GetDimension() ~= chip:GetDimension() then
+                returnValue = false
+            end
+        end
+        return returnValue
     end
     
 	if entities then

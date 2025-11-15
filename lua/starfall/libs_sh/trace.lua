@@ -76,13 +76,14 @@ function trace_library.line(start, endpos, filter, mask, colgroup, ignworld, whi
 		endpos = endpos_vec,
 		filter = function(ent)
             local baseFilter = convertFilter(filter)
+			local returnValue = true
             if type(baseFilter) == "table" then
-                if table.HasValue(baseFilter,ent) then return false end
+                if table.HasValue(baseFilter,ent) then returnValue = false end
             elseif type(baseFilter) == "Entity" then 
-                if ent == baseFilter then return false end
+                if ent == baseFilter then returnValue = false end
             end
-            if ent:GetDimension() ~= instance.entity:GetDimension() then return false end
-            return true
+            if returnValue and (ent:GetDimension() ~= instance.entity:GetDimension()) then returnValue = false end
+            return returnValue
         end,
 		mask = mask,
 		collisiongroup = colgroup,
