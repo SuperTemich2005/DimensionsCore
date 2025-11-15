@@ -453,6 +453,7 @@ FindMetaTable("Player").GetEyeTrace = function(self)
         start = self:EyePos(),
         endpos = self:EyePos()+self:GetAimVector()*32767,
         filter = function(ent)
+            if ent == self then return false end
             if ent:GetDimension() ~= self:GetDimension() then return false end
             return true
         end
