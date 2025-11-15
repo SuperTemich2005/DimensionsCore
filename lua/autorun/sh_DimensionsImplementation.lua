@@ -10,7 +10,7 @@ function ENT:GetDimension()
 end
 
 if SERVER then
-    util.AddNetworkString("Entity Changed Dimensions")
+    -- Function to Set Dimension. It will try writing dimension value to given entity and propagate the dimension to connected entities.
     function ENT:SetDimension(dimension)
         timer.Simple(0,function()
             if not IsValid(self) then return end
@@ -90,6 +90,7 @@ if SERVER then
         end) 
     end
     
+    -- Hooks for setting dimension to newly created entities
     hook.Add("OnEntityCreated","Assign Dimension Values To Entities",function(ent)
         timer.Simple(0,function()
             if not IsValid(ent) then return end
@@ -116,12 +117,12 @@ if SERVER then
         end)
     end)
 
+    -- Hook for handling physical colisions between entities
     hook.Add("ShouldCollide","Prevent Entities from Colliding Across Dimensions",function(ent1,ent2)
         return (ent1:GetDimension() == ent2:GetDimension()) or (ent1:IsWorld() or ent2:IsWorld())
     end)
 
-    -- Modify traces
-
+    -- Hook for making bullets pass through extradimensional entities
     hook.Add("EntityFireBullets","Prevent Bullets from Getting Blocked by Extradimensional Entities",function(ent,data)
         local baseCallback = nil
         if data.Callback then
@@ -137,11 +138,13 @@ if SERVER then
         end
     end)
 
-    -- Modify USE interactions
-
-    hook.Add("PlayerUse","Prevent Players from Interacting with Extradimensional Entities",function(ply,ent)
-        if ply:GetDimension() ~= ent:GetDimension() then
-            return false
-        end
-    end)
+    -- Hook for preventing miscellaneous interactions between player and entities
+    local interactionHook = {"PlayerUse","PhysgunPickup","AllowPlayerPickup","GravGunPickupAllowed","PlayerCanPickupWeapon","PlayerCanPickupItem","PlayerCanHearPlayersVoice","CanPlayerUnfreeze"}
+    for k,hook in ipairs(interactionHook) do
+        hook.Add(hook,"Prevent Player Interactions with Extradimensional Entities",function(ply,ent)
+            if(ply:GetDimension() != ent:GetDimension()) then
+                return false
+            end
+        end)
+    end
 end
