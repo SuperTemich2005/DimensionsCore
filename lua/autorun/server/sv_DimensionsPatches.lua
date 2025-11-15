@@ -446,3 +446,16 @@ function Glide.FireBullet(params,traceFilter)
     end
     glideFireBulletBase(params,modifiedFilter)
 end
+
+local baseEyeTrace = Player.GetEyeTrace
+Player.GetEyeTrace = function(self)
+    local trace = util.TraceLine({
+        start = self:EyePos(),
+        endpos = self:EyePos()+self:GetAimVector()*32767,
+        filter = function(ent)
+            if ent:GetDimension() ~= self:GetDimension() then return false end
+            return true
+        end
+    })
+    return trace
+end
