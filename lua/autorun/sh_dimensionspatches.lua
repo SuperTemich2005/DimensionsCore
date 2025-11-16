@@ -50,14 +50,6 @@ hook.Add("DISABLED PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensi
     end)
 end)
 
-hook.Add("PlayerSwitchWeapon","Pull Weapons in Owner's Dimension",function(owner,_,weapon)
-    weapon:SetDimension(owner:GetDimension())
-end)
-hook.Add("WeaponEquip","Pull Weapons in Owner's Dimension",function(weapon,owner)
-    weapon:SetDimension(owner:GetDimension())
-end)
-
-
 local baseTraceLine = util.TraceLine
 util.TraceLine = function(traceData)
     local baseFilter = traceData.filter
@@ -76,17 +68,24 @@ util.TraceLine = function(traceData)
             
             local candidates = ents.FindInSphere(startpos,64)
             if #candidates > 0 then
-                originator = candidates[1]
-                local originatorBestScore = originator:GetForward():Dot(traceDir)
+                originator = nil
+                local originatorBestScore = 0
                 for _, candidate in pairs(candidates) do
-                    local thisScore = candidate:GetForward():Dot(traceDir)
-                    if thisScore > originatorBestScore then
+                    if not (IsValid(candidate) and (candidate:GetPhysicsObject():IsValid())) then continue end
+                    local thisScoreForward = traceDir:Dot(candidate:GetForward())
+                    local thisScoreUp = traceDir:Dot(candidate:GetUp())
+                    if thisScoreForward > originatorBestScore then
                         originator = candidate
-                        originatorBestScore = thisScore
+                        originatorBestScore = thisScoreForward
+                    elseif thisScoreUp > originatorBestScore then
+                        originator = candidate
+                        originatorBestScore = thisScoreUp
                     end
                     if originatorBestScore > 0.9999 then break end
                 end
-                traceDimension = originator:GetDimension()
+                if originator then
+                    traceDimension = originator:GetDimension()
+                end
             end
         end
     end
@@ -147,17 +146,24 @@ util.TraceHull = function(traceData)
             
             local candidates = ents.FindInSphere(startpos,64)
             if #candidates > 0 then
-                originator = candidates[1]
-                local originatorBestScore = originator:GetForward():Dot(traceDir)
+                originator = nil
+                local originatorBestScore = 0
                 for _, candidate in pairs(candidates) do
-                    local thisScore = candidate:GetForward():Dot(traceDir)
-                    if thisScore > originatorBestScore then
+                    if not (IsValid(candidate) and (candidate:GetPhysicsObject():IsValid())) then continue end
+                    local thisScoreForward = traceDir:Dot(candidate:GetForward())
+                    local thisScoreUp = traceDir:Dot(candidate:GetUp())
+                    if thisScoreForward > originatorBestScore then
                         originator = candidate
-                        originatorBestScore = thisScore
+                        originatorBestScore = thisScoreForward
+                    elseif thisScoreUp > originatorBestScore then
+                        originator = candidate
+                        originatorBestScore = thisScoreUp
                     end
                     if originatorBestScore > 0.9999 then break end
                 end
-                traceDimension = originator:GetDimension()
+                if originator then
+                    traceDimension = originator:GetDimension()
+                end
             end
         end
     end
@@ -197,5 +203,6 @@ util.TraceHull = function(traceData)
         end
     end
     traceData.filter = newFilter
+    
     return baseTraceHull(traceData)
 end

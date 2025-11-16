@@ -30,6 +30,15 @@ local function CheckPlayers(self, contact) -- Function used by gmod_wire_target_
 end
 
 
+hook.Add("PlayerSwitchWeapon","Pull Weapons in Owner's Dimension",function(owner,_,weapon)
+    weapon:SetDimension(owner:GetDimension())
+end)
+
+hook.Add("WeaponEquip","Pull Weapons in Owner's Dimension",function(weapon,owner)
+    weapon:SetDimension(owner:GetDimension())
+end)
+
+
 hook.Add("OnEntityCreated","Patch Entities to Account for Dimensions",function(ENT)
     if ENT:GetClass() == "gmod_wire_target_finder" then
         function ENT:Think()
@@ -123,6 +132,12 @@ hook.Add("OnEntityCreated","Patch Entities to Account for Dimensions",function(E
             self:NextThink(CurTime() + 1)
             return true
         end
+    elseif ENT:GetClass() == "gmod_wire_trigger" then
+        ENT:AddCallback("Setup",function()
+            timer.Simple(FrameTime(),function()
+                ENT:GetTriggerEntity():SetDimension(ENT:GetDimension())
+            end)
+        end)
     elseif ENT:GetClass() == "gmod_wire_trigger_entity" then
         function ENT:StartTouch( ent )
 
