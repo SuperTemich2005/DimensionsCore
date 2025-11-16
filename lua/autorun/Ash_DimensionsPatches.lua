@@ -1,4 +1,4 @@
-hook.Add("PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensional Entities",function(ply,oldWeapon,newWeapon)
+hook.Add("DISABLED PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensional Entities",function(ply,oldWeapon,newWeapon)
     timer.Simple(0,function()
         if newWeapon:GetClass() == "gmod_tool" then
             local weapon = ply:GetTool()
@@ -53,37 +53,50 @@ end)
 
 local baseTraceLine = util.TraceLine
 util.TraceLine = function(traceData)
-    print("Modified TraceLine call!")
-    local candidates = ents.FindInBox(traceData.start-Vector(1,1,1),traceData.start+Vector(1,1,1))
-    print("Trying to figure out entity that sent the trace. Candidates: ")
-    PrintTable(candidates)
+    --print("Modified TraceLine call!")
+    local candidates = ents.FindInBox(traceData.start-Vector(1,1,1)*100,traceData.start+Vector(1,1,1)*100)
+    --print("Trying to figure out entity that sent the trace. Candidates: ")
+    --PrintTable(candidates)
     local originator = candidates[1]
     for _, candidate in pairs(candidates) do
-        print("Dotting ",candidate,", dot product: ",candidate:GetForward():GetNormalized()," dot ",(traceData.endpos-traceData.start):GetNormalized()," = ",candidate:GetForward():GetNormalized():Dot((traceData.endpos-traceData.start):GetNormalized()))
+        --print("Dotting ",candidate,", dot product: ",candidate:GetForward():GetNormalized()," dot ",(traceData.endpos-traceData.start):GetNormalized()," = ",candidate:GetForward():GetNormalized():Dot((traceData.endpos-traceData.start):GetNormalized()))
         if candidate:GetForward():GetNormalized():Dot((traceData.endpos-traceData.start):GetNormalized()) > originator:GetForward():GetNormalized():Dot((traceData.endpos-traceData.start):GetNormalized()) then
             originator = candidate
-            print("New originator: ",originator)
+            --print("New originator: ",originator)
         end
     end
-    print("Settled on originator: ",originator)
+    --print("Settled on originator: ",originator)
     
     local baseFilter = traceData.filter
     traceData.filter = function(ent)
         local returnValue = false
+        --print("Starting trace filtering")
         if baseFilter then
+            --print("There's a base filter of type ",type(baseFilter))
             if type(baseFilter) == "table" then
                 returnValue = not table.HasValue(baseFilter,ent) -- Set returnValue to be true if ent is not in baseFilter (table)
-            elseif type(baseFilter) == "Entity" then
+                --print("It's a table. returnValue set to ",returnValue)
+            elseif type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
                 returnValue = baseFilter ~= ent -- Set returnValue to be true if ent is not baseFilter (entity)
+                --print("It's an entity. returnValue set to ",returnValue)
             elseif type(baseFilter) == "function" then
                 returnValue = baseFilter(ent)
+                --print("It's a function. returnValue set to ",returnValue)
             end
+        else
+            --print("There's no base filter. returnValue set to true")
+            returnValue = true
         end
+
         if returnValue then -- If we detect that a trace might hit, we then check for dimensions
+            --print("Checking dimensions")
             if IsValid(originator) then
                 if originator:GetDimension() ~= ent:GetDimension() then
                     returnValue = false
+                else
+                    returnValue = true
                 end
+                --print("returnValue set to ",returnValue)
             end
         end
         return returnValue

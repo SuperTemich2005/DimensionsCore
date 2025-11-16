@@ -1,6 +1,6 @@
 -- This file is dedicated to patching entities and functions in other addons.
 
-local function isOneOf(value, values_str, case_sensitive) -- Function used by gmod_wire_target_finder
+--[[ local function isOneOf(value, values_str, case_sensitive) -- Function used by gmod_wire_target_finder
     if not isstring(value) or not isstring(values_str) then return false end
     if values_str == "" then return true end -- why :/
 
@@ -28,9 +28,9 @@ local function CheckPlayers(self, contact) -- Function used by gmod_wire_target_
 
 	return self:FindColor(contact) and self:CheckTheBuddyList(contact)
 end
+ ]]
 
-
-hook.Add("OnEntityCreated","Patch Entities to Account for Dimensions",function(ENT)
+hook.Add("DISABLED OnEntityCreated","Patch Entities to Account for Dimensions",function(ENT)
     if ENT:GetClass() == "gmod_wire_ranger" then -- Patching Wiremod Ranger to make it not hit extradimensional entities
         function ENT:Think()
             self.BaseClass.Think(self)
@@ -418,7 +418,7 @@ hook.Add("OnEntityCreated","Patch Entities to Account for Dimensions",function(E
 end)
 
 -- Patch Glide Turrets
-local glideFireBulletBase = Glide.FireBullet
+--[[ local glideFireBulletBase = Glide.FireBullet
 function Glide.FireBullet(params,traceFilter)
     local baseFilter = traceFilter.filter
     local modifiedFilter = function(ent)
@@ -445,9 +445,9 @@ function Glide.FireBullet(params,traceFilter)
         end
     end
     glideFireBulletBase(params,modifiedFilter)
-end
+end ]]
 
-local baseEyeTrace = FindMetaTable("Player").GetEyeTrace
+--[[ local baseEyeTrace = FindMetaTable("Player").GetEyeTrace
 FindMetaTable("Player").GetEyeTrace = function(self)
     local trace = util.TraceLine({
         start = self:EyePos(),
@@ -459,4 +459,4 @@ FindMetaTable("Player").GetEyeTrace = function(self)
         end
     })
     return trace
-end
+end ]]
