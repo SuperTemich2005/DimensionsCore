@@ -2,6 +2,9 @@
 concommand.Add("dim_goto",function(ply,cmd,args)
     ply:SetDimension(args[1])
     print("Teleported ",ply," to dimension ",ply:GetDimension())
+    timer.Simple(FrameTime(),function()
+        PrintTable(DimensionTables)
+    end)
 end)
 concommand.Add("dim_send",function(ply,cmd,args)
     if not IsValid(ply:GetEyeTrace().Entity) then return end

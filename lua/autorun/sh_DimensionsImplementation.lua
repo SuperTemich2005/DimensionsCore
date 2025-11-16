@@ -20,7 +20,10 @@ if SERVER then
     function PLY:SetDimension(dimension)
         timer.Simple(0,function()
             if not IsValid(self) then return end
-
+            if DimensionTables[self:GetDimension()] then
+                DimensionTables[self:GetDimension()][self] = nil
+                print("Removed ",self," from ",DimensionTables[self:GetDimension()])
+            end
             self:SetNWString("Dimension",dimension)
 
             -- Update collisions
@@ -60,6 +63,10 @@ if SERVER then
             if not IsValid(self) then return end
 
             -- Set dimension value
+            if DimensionTables[self:GetDimension()] then
+                DimensionTables[self:GetDimension()][self] = nil
+                print("Removed ",self," from ",DimensionTables[self:GetDimension()])
+            end
             self:SetNWString("Dimension",dimension)
 
             -- Update collisions
@@ -82,6 +89,9 @@ if SERVER then
             if not IsValid(self:GetParent()) then
                 for k, v in pairs(constraint.GetAllConstrainedEntities(self)) do
                     -- Set dimension value
+                    if DimensionTables[v:GetDimension()] then
+                        DimensionTables[v:GetDimension()][v] = nil
+                    end
                     v:SetNWString("Dimension",dimension)
                     
                     -- Update collisions
@@ -107,7 +117,7 @@ if SERVER then
                         v:SetPreventTransmit(ply,ply:GetDimension() ~= v:GetDimension())
                     end
 
-                    DimensionTables[dimension][self] = true
+                    DimensionTables[dimension][v] = true
                 end
             end
 
