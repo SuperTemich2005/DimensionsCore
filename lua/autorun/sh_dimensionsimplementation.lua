@@ -16,6 +16,11 @@ function PLY:GetDimension()
 end
 
 if SERVER then
+    --set the creator of an entity (for ent:GetCreator()) to the player that spawned it
+    hook.Add("PlayerSpawnedProp","DimensionCore-SetEntCreator",function(ply,model,ent)
+        ent:SetCreator(ply)
+    end)
+
     -- Function to Set Dimension. It will try writing dimension value to given entity and propagate the dimension to connected entities.
     function PLY:SetDimension(dimension)
         timer.Simple(0,function()
