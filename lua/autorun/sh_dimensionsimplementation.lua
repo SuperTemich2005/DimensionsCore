@@ -16,11 +16,6 @@ function PLY:GetDimension()
 end
 
 if SERVER then
-    --set the creator of an entity (for ent:GetCreator()) to the player that spawned it
-    hook.Add("PlayerSpawnedProp","DimensionCore-SetEntCreator",function(ply,model,ent)
-        ent:SetCreator(ply)
-    end)
-
     -- Function to Set Dimension. It will try writing dimension value to given entity and propagate the dimension to connected entities.
     function PLY:SetDimension(dimension)
         timer.Simple(0,function()
@@ -220,6 +215,22 @@ if SERVER then
             if(ply:GetDimension() != ent:GetDimension()) then
                 return false
             end
+        end)
+    end
+
+    --set the creator of an entity (for ent:GetCreator()) to the player that spawned it
+    local playerSpawnedStuff = {"PlayerSpawnedNPC","PlayerSpawnedSENT","PlayerSpawnedSWEP","PlayerSpawnedVehicle"}
+    for k,hookName in ipairs(playerSpawnedStuff) do
+        hook.Add(hookName,"DimensionCore-SetSpawnedCreator",function(ply,ent)
+            ent:SetCreator(ply)
+        end)
+    end
+
+    --Extra because these ones have a model argument
+    local playerSpawnedStuffExt = {"PlayerSpawnedEffect","PlayerSpawnedProp","PlayerSpawnedRagdoll"}
+    for k,hookName in ipairs(playerSpawnedStuffExt) do
+        hook.Add(hookName,"DimensionCore-SetSpawnedCreator",function(ply,model,ent)
+            ent:SetCreator(ply)
         end)
     end
 
