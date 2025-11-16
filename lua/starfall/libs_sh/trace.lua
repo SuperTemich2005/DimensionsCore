@@ -1,5 +1,3 @@
--- TODO: Maybe I really shouldn't just copypaste the entire file to make my patch lmao
-
 -- Global to all starfalls
 local checkluatype = SF.CheckLuaType
 
@@ -74,17 +72,7 @@ function trace_library.line(start, endpos, filter, mask, colgroup, ignworld, whi
 	return structWrapper(instance, util_TraceLine({
 		start = start_vec,
 		endpos = endpos_vec,
-		filter = function(ent)
-            local baseFilter = convertFilter(filter)
-			local returnValue = true
-            if type(baseFilter) == "table" then
-                if table.HasValue(baseFilter,ent) then returnValue = false end
-            elseif type(baseFilter) == "Entity" then 
-                if ent == baseFilter then returnValue = false end
-            end
-            if returnValue and (ent:GetDimension() ~= instance.entity:GetDimension()) then returnValue = false end
-            return returnValue
-        end,
+		filter = convertFilter(filter),
 		mask = mask,
 		collisiongroup = colgroup,
 		ignoreworld = ignworld,
@@ -114,16 +102,7 @@ function trace_library.hull(start, endpos, minbox, maxbox, filter, mask, colgrou
 	return structWrapper(instance, util_TraceHull({
 		start = start_vec,
 		endpos = endpos_vec,
-		filter = function(ent)
-            local baseFilter = convertFilter(filter)
-            if type(baseFilter) == "table" then
-                if table.HasValue(baseFilter,ent) then return false end
-            elseif type(baseFilter) == "Entity" then 
-                if ent == baseFilter then return false end
-            end
-            if ent:GetDimension() ~= instance.entity:GetDimension() then return false end
-            return true
-        end,
+		filter = convertFilter(filter),
 		mask = mask,
 		collisiongroup = colgroup,
 		ignoreworld = ignworld,

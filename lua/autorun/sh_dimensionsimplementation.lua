@@ -209,7 +209,7 @@ if SERVER then
     end)
 
     -- Hook for preventing miscellaneous interactions between player and entities (credit Nova Astral)
-    local interactionHook = {"PlayerUse","PhysgunPickup","AllowPlayerPickup","GravGunPickupAllowed","PlayerCanPickupWeapon","PlayerCanPickupItem","PlayerCanHearPlayersVoice","CanPlayerUnfreeze"}
+    local interactionHook = {"PlayerUse","PhysgunPickup","AllowPlayerPickup","GravGunPickupAllowed","PlayerCanPickupItem","PlayerCanHearPlayersVoice","CanPlayerUnfreeze"}
     for k,hookName in ipairs(interactionHook) do
         hook.Add(hookName,"Prevent Player Interactions with Extradimensional Entities",function(ply,ent)
             if(ply:GetDimension() != ent:GetDimension()) then

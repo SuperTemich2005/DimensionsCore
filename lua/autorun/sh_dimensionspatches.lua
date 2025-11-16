@@ -50,6 +50,13 @@ hook.Add("DISABLED PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensi
     end)
 end)
 
+hook.Add("PlayerSwitchWeapon","Pull Weapons in Owner's Dimension",function(owner,_,weapon)
+    weapon:SetDimension(owner:GetDimension())
+end)
+hook.Add("WeaponEquip","Pull Weapons in Owner's Dimension",function(weapon,owner)
+    weapon:SetDimension(owner:GetDimension())
+end)
+
 
 local baseTraceLine = util.TraceLine
 util.TraceLine = function(traceData)
@@ -83,38 +90,31 @@ util.TraceLine = function(traceData)
             end
         end
     end
-
-    if SERVER then print("Trace dimension: ",traceDimension) end
     
     -- Build new filter
     local newFilter = nil
     if baseFilter then
         if type(baseFilter) == "table" then
-            if SERVER then print("New filter will be a table (from table)") end
             newFilter = table.Copy(baseFilter)
             for dimensionName, dimensionTable in pairs(DimensionTables) do
                 if dimensionName ~= traceDimension then
                     for v, _ in pairs(dimensionTable) do
                         if not IsValid(v) then continue end
                         newFilter[#newFilter+1] = v
-                        if SERVER then print("Adding entity ",v," from dimension ",dimensionName) end
                     end
                 end
             end
         elseif type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
-            if SERVER then print("New filter will be a table (from entity ",baseFilter,")") end
             newFilter = {baseFilter}
             for dimensionName, dimensionTable in pairs(DimensionTables) do
                 if dimensionName ~= traceDimension then
                     for v, _ in pairs(dimensionTable) do
                         if not IsValid(v) then continue end
                         newFilter[#newFilter+1] = v
-                        if SERVER then print("Adding entity ",v," from dimension ",dimensionName) end
                     end
                 end
             end
         elseif type(baseFilter) == "function" then
-            if SERVER then print("New filter will be a function") end
             newFilter = function(ent)
                 if ent:GetDimension() ~= traceDimension then return false end
                 return baseFilter(ent)
