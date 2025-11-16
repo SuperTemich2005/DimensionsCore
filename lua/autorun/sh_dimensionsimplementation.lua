@@ -209,7 +209,7 @@ if SERVER then
     end)
 
     -- Hook for preventing miscellaneous interactions between player and entities (credit Nova Astral)
-    local interactionHook = {"PlayerUse","PhysgunPickup","AllowPlayerPickup","GravGunPickupAllowed","PlayerCanPickupItem","PlayerCanHearPlayersVoice","CanPlayerUnfreeze"}
+    local interactionHook = {"PlayerUse","PhysgunPickup","AllowPlayerPickup","GravGunPickupAllowed","PlayerCanPickupItem","PlayerCanHearPlayersVoice","CanPlayerUnfreeze","CanPlayerEnterVehicle","GravGunPunt"}
     for k,hookName in ipairs(interactionHook) do
         hook.Add(hookName,"Prevent Player Interactions with Extradimensional Entities",function(ply,ent)
             if(ply:GetDimension() != ent:GetDimension()) then
@@ -217,4 +217,52 @@ if SERVER then
             end
         end)
     end
+
+    -- Edge case, if a player is somehow in a vehicle that isnt in the same dimension
+    hook.Add("PlayerLeaveVehicle","DimensionCore-LeaveVehicle",function(ply,veh)
+        if(ply:GetDimension() ~= veh:GetDimension()) then
+            ply:SetDimension(veh:GetDimension())
+        end
+    end)
+
+    -- Return all players to the default dimension if an admin ran map cleanup
+    --make sure this can check if a player is stuck in something and just respawn them later
+    hook.Add("PostCleanupMap","DimensionCore-MapCleanup",function()
+        for k,v in ipairs(player.GetAll()) do
+            v:SetDimension(DEFAULT_DIMENSION)
+        end
+    end)
+end
+
+if CLIENT then
+    --potentially add DrawPhysgunBeam, EntityFireBullets, GravGunPunt, and PlayerFootstep hooks if they still render from players/entities in other dimensions
+    
+    --may need PlayerStartVoice if you can see the hud icon of players in other dimensions using VC
+
+    --make players very lonely by preventing them from seeing chat messages from players in other dimensions
+    --make sure this doesnt break things like ulx message admins using @<message>
+    hook.Add("OnPlayerChat", "DimensionCore-DimensionalChat", function(ply, text, teamChat, isDead)
+        if(ply:GetDimension() ~= LocalPlayer():GetDimension()) then
+            if(string.sub(text,1,1) ~= ">") then --make players talk cross-dimensionally if the message starts with a >
+                return true
+            end
+        end
+    end)
+
+    hook.Add("EntityEmitSound", "DimensionCore-ClientSounds", function(tbl)
+        local ent = tbl.Entity
+
+        if(ent:GetDimension() ~= LocalPlayer():GetDimension()) then
+            return false
+        end
+    end)
+
+    /* -- unfinished currently as attacker / victim is the string name of it, not the entity, and it can be an npc or a player
+    hook.Add("AddDeathNotice","DimensionCore-DeathNotice",function(attacker,attackerTeam,inflictor,victim,victimTeam)
+        ent = findByName(victim) --this wont work as findByName does nothing on the client
+        if(victim:GetDimension() ~= LocalPlayer():GetDimension()) then
+            return false
+        end
+    end)
+    */
 end
