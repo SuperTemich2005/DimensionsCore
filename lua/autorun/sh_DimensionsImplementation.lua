@@ -1,43 +1,65 @@
 AddCSLuaFile()
 
-DEFAULT_DIMENSION = 0
+DEFAULT_DIMENSION = "overworld"
 
 -- Modify Entity Physics and define dimension management-related functions
 local ENT = FindMetaTable("Entity")
+local PLY = FindMetaTable("Player")
 
 function ENT:GetDimension()
-    return self:GetNWInt("Dimension")
+    return self:GetNWString("Dimension")
+end
+
+function PLY:GetDimension()
+    return self:GetNWString("Dimension")
 end
 
 if SERVER then
     -- Function to Set Dimension. It will try writing dimension value to given entity and propagate the dimension to connected entities.
-    function ENT:SetDimension(dimension)
+    function PLY:SetDimension(dimension)
         timer.Simple(0,function()
             if not IsValid(self) then return end
 
-            -- Set dimension value
-            self:SetNWInt("Dimension",dimension)
+            self:SetNWString("Dimension",dimension)
 
             -- Update collisions
             if IsValid(self:GetPhysicsObject()) and self:GetPhysicsObject():IsValid() then
                 self:SetCustomCollisionCheck(dimension ~= DEFAULT_DIMENSION)
                 self:CollisionRulesChanged()
             end
-    
-            -- Handle player's entities (weapons and viewmodels and viewentities)
-            if self:IsPlayer() then
-                for _, wep in ipairs(self:GetWeapons()) do
-                    wep:SetDimension(dimension)
-                end
 
-                -- Also update visibility on ALL entities for this player
-                for _, ent in pairs(ents.GetAll()) do
-                    if IsValid(ent:GetOwner()) and ent:IsWeapon() and ent:GetOwner() == self then continue end
-                    if (ent == self:GetViewModel(0)) or (ent == self:GetViewModel(1)) or (ent == self:GetViewModel(2)) then continue end
-                    if ent == self:GetViewEntity() then continue end
-                    if ent == self:GetHands() then continue end
-                    ent:SetPreventTransmit(self,self:GetDimension() ~= ent:GetDimension())
-                end
+            -- Handle player's entities (weapons and viewmodels and viewentities)
+            for _, wep in ipairs(self:GetWeapons()) do
+                wep:SetDimension(dimension)
+            end
+
+            -- Also update visibility on ALL entities for this player
+            for _, ent in pairs(ents.GetAll()) do
+                if IsValid(ent:GetOwner()) and ent:IsWeapon() and ent:GetOwner() == self then continue end
+                if (ent == self:GetViewModel(0)) or (ent == self:GetViewModel(1)) or (ent == self:GetViewModel(2)) then continue end
+                if ent == self:GetViewEntity() then continue end
+                if ent == self:GetHands() then continue end
+                ent:SetPreventTransmit(self,self:GetDimension() ~= ent:GetDimension())
+            end
+
+            -- Update visibility of this entity to ALL players
+            for _, ply in pairs(player.GetAll()) do
+                self:SetPreventTransmit(ply,ply:GetDimension() ~= self:GetDimension())
+            end
+        end)
+    end
+
+    function ENT:SetDimension(dimension)
+        timer.Simple(0,function()
+            if not IsValid(self) then return end
+
+            -- Set dimension value
+            self:SetNWString("Dimension",dimension)
+
+            -- Update collisions
+            if IsValid(self:GetPhysicsObject()) and self:GetPhysicsObject():IsValid() then
+                self:SetCustomCollisionCheck(dimension ~= DEFAULT_DIMENSION)
+                self:CollisionRulesChanged()
             end
 
             -- Make vehicles also pull players along
@@ -51,7 +73,7 @@ if SERVER then
             if not IsValid(self:GetParent()) then
                 for k, v in pairs(constraint.GetAllConstrainedEntities(self)) do
                     -- Set dimension value
-                    v:SetNWInt("Dimension",dimension)
+                    v:SetNWString("Dimension",dimension)
                     
                     -- Update collisions
                     if IsValid(v:GetPhysicsObject()) and v:GetPhysicsObject():IsValid() then
@@ -94,21 +116,46 @@ if SERVER then
     hook.Add("OnEntityCreated","Assign Dimension Values To Entities",function(ent)
         timer.Simple(0,function()
             if not IsValid(ent) then return end
-            if ent:GetDimension() ~= nil then return end
+            print(ent,"is created!")
+            if (ent:GetDimension() ~= "") then
+                print("Dimension is already set for ",ent,": ",ent:GetDimension()) 
+                return 
+            end
 
             if IsValid(ent:GetOwner()) or IsValid(ent:CPPIGetOwner()) or IsValid(ent:GetCreator()) then
+                print("Propaganding dimension from")
                 if IsValid(ent:CPPIGetOwner()) then
+                    print("CPPI Owner ",ent:CPPIGetOwner(),ent:CPPIGetOwner():GetDimension())
                     ent:SetDimension(ent:CPPIGetOwner():GetDimension())
                 elseif IsValid(ent:GetOwner()) then
+                    print("Vanilla Owner ",ent:GetOwner(),ent:GetOwner():GetDimension())
                     ent:SetDimension(ent:GetOwner():GetDimension())
                 elseif IsValid(ent:GetCreator()) then
+                    print("Vanilla Creator ",ent:GetCreator(),ent:GetCreator():GetDimension())
                     ent:SetDimension(ent:GetCreator():GetDimension())
                 end
-            else
-                ent:SetDimension(DEFAULT_DIMENSION)
             end
+            timer.Simple(0,function()
+                print("Dimension: ",ent:GetDimension())
+                if ent:GetDimension() == "" then
+                    print("Dimension is an empty string. Falling back to DEFAULT_DIMENSION (",DEFAULT_DIMENSION,")")
+                    ent:SetDimension(DEFAULT_DIMENSION)
+                end
+                timer.Simple(0,function()
+                    print("Assigned dimension: ",ent:GetDimension())
+                end)
+            end)
         end)
     end)
+
+    -- Hooks for putting players in dimensions
+    local playerRespawnHooks = {"PlayerSpawn","PlayerInitialSpawn"}
+    for _, hookName in pairs(playerRespawnHooks) do
+        hook.Add(hookName,"Assign Dimension Values to Players",function(ply)
+            print("Putting ",ply," in dimension ",DEFAULT_DIMENSION)
+            ply:SetDimension(DEFAULT_DIMENSION)
+        end)
+    end
 
     hook.Add("CreateEntityRagdoll","Assign Dimension Values to Ragdolls",function(owner,doll)
         timer.Simple(0,function()
