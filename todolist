@@ -1,0 +1,2 @@
+- Fix TARDIS (find a way to properly propagate dimension value to all interior elements)
+- Fix gmod_wire_trigger not propagating its dimension onto gmod_wire_trigger_entity
