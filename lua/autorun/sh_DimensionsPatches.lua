@@ -53,7 +53,7 @@ end)
 
 local baseTraceLine = util.TraceLine
 util.TraceLine = function(traceData)
-    --print("Modified TraceLine call!")
+    print("Modified TraceLine call!")
     local candidates = ents.FindInBox(traceData.start-Vector(1,1,1)*100,traceData.start+Vector(1,1,1)*100)
     --print("Trying to figure out entity that sent the trace. Candidates: ")
     --PrintTable(candidates)
