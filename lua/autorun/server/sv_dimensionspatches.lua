@@ -1,6 +1,6 @@
 -- This file is dedicated to patching entities and functions in other addons.
 
---[[ local function isOneOf(value, values_str, case_sensitive) -- Function used by gmod_wire_target_finder
+local function isOneOf(value, values_str, case_sensitive) -- Function used by gmod_wire_target_finder
     if not isstring(value) or not isstring(values_str) then return false end
     if values_str == "" then return true end -- why :/
 
@@ -28,7 +28,7 @@ local function CheckPlayers(self, contact) -- Function used by gmod_wire_target_
 
 	return self:FindColor(contact) and self:CheckTheBuddyList(contact)
 end
- ]]
+
 
 hook.Add("OnEntityCreated","Patch Entities to Account for Dimensions",function(ENT)
     if ENT:GetClass() == "gmod_wire_target_finder" then
