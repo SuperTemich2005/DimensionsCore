@@ -1,6 +1,7 @@
 AddCSLuaFile()
 
 DEFAULT_DIMENSION = "overworld"
+DimensionTables = {} -- Key: dimension name. Value: table of entities residing in that dimension.
 
 -- Modify Entity Physics and define dimension management-related functions
 local ENT = FindMetaTable("Entity")
@@ -32,7 +33,7 @@ if SERVER then
             for _, wep in ipairs(self:GetWeapons()) do
                 wep:SetDimension(dimension)
             end
-
+            
             -- Also update visibility on ALL entities for this player
             for _, ent in pairs(ents.GetAll()) do
                 if IsValid(ent:GetOwner()) and ent:IsWeapon() and ent:GetOwner() == self then continue end
@@ -41,11 +42,16 @@ if SERVER then
                 if ent == self:GetHands() then continue end
                 ent:SetPreventTransmit(self,self:GetDimension() ~= ent:GetDimension())
             end
-
+            
             -- Update visibility of this entity to ALL players
             for _, ply in pairs(player.GetAll()) do
                 self:SetPreventTransmit(ply,ply:GetDimension() ~= self:GetDimension())
             end
+            
+            if not DimensionTables[dimension] then
+                DimensionTables[dimension] = {}
+            end
+            DimensionTables[dimension][self] = true
         end)
     end
 
@@ -68,7 +74,10 @@ if SERVER then
                     self:GetDriver():SetDimension(dimension)
                 end
             end
-
+            
+            if not DimensionTables[dimension] then
+                DimensionTables[dimension] = {}
+            end
             -- Make dimension shift propagate on all constrained entities, but only if this is not a child
             if not IsValid(self:GetParent()) then
                 for k, v in pairs(constraint.GetAllConstrainedEntities(self)) do
@@ -97,6 +106,8 @@ if SERVER then
                     for _, ply in pairs(player.GetAll()) do
                         v:SetPreventTransmit(ply,ply:GetDimension() ~= v:GetDimension())
                     end
+
+                    DimensionTables[dimension][self] = true
                 end
             end
 
@@ -109,6 +120,8 @@ if SERVER then
             for _, ply in pairs(player.GetAll()) do
                 self:SetPreventTransmit(ply,ply:GetDimension() ~= self:GetDimension())
             end
+
+            DimensionTables[dimension][self] = true
         end) 
     end
     

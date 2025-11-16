@@ -52,22 +52,16 @@ end)
 
 
 local baseTraceLine = util.TraceLine
-util.TraceLine = function(traceData)
-    --print("Modified TraceLine call!")
+--[[ util.TraceLine = function(traceData)
     local candidates = ents.FindInBox(traceData.start-Vector(1,1,1)*100,traceData.start+Vector(1,1,1)*100)
-    --print("Trying to figure out entity that sent the trace. Candidates: ")
-    --PrintTable(candidates)
     local originator = candidates[1]
     if #candidates > 0 then
         for _, candidate in pairs(candidates) do
-            --print("Dotting ",candidate,", dot product: ",candidate:GetForward():GetNormalized()," dot ",(traceData.endpos-traceData.start):GetNormalized()," = ",candidate:GetForward():GetNormalized():Dot((traceData.endpos-traceData.start):GetNormalized()))
             if candidate:GetForward():GetNormalized():Dot((traceData.endpos-traceData.start):GetNormalized()) > originator:GetForward():GetNormalized():Dot((traceData.endpos-traceData.start):GetNormalized()) then
                 originator = candidate
-                --print("New originator: ",originator)
             end
         end
     end
-    --print("Settled on originator: ",originator)
     local traceDimension = originator:GetDimension()
     if traceDimension == "" then traceDimension = DEFAULT_DIMENSION end
     
@@ -80,37 +74,28 @@ util.TraceLine = function(traceData)
                 end
             end
         elseif type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
-            -- Don't bother because the entity should not get hit regardless of the dimension
         elseif type(baseFilter) == "function" then
             baseFilter = function(ent)
                 local returnValue = false
-                --print("Starting trace filtering")
                 if baseFilter then
-                    --print("There's a base filter of type ",type(baseFilter))
                     if type(baseFilter) == "table" then
                         returnValue = not table.HasValue(baseFilter,ent) -- Set returnValue to be true if ent is not in baseFilter (table)
-                        --print("It's a table. returnValue set to ",returnValue)
                     elseif type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
                         returnValue = baseFilter ~= ent -- Set returnValue to be true if ent is not baseFilter (entity)
-                        --print("It's an entity. returnValue set to ",returnValue)
                     elseif type(baseFilter) == "function" then
                         returnValue = baseFilter(ent)
-                        --print("It's a function. returnValue set to ",returnValue)
                     end
                 else
-                    --print("There's no base filter. returnValue set to true")
                     returnValue = true
                 end
         
                 if returnValue then -- If we detect that a trace might hit, we then check for dimensions
-                    --print("Checking dimensions")
                     if IsValid(originator) then
                         if originator:GetDimension() ~= ent:GetDimension() then
                             returnValue = false
                         else
                             returnValue = true
                         end
-                        --print("returnValue set to ",returnValue)
                     end
                 end
                 return returnValue
@@ -125,5 +110,82 @@ util.TraceLine = function(traceData)
         end
     end
     traceData.filter = baseFilter
+    return baseTraceLine(traceData)
+end ]]
+util.TraceLine = function(traceData)
+    local baseFilter = traceData.filter
+    local originator = nil
+    local traceDimension = DEFAULT_DIMENSION
+    
+    --print("Base Filter: ",baseFilter,type(baseFilter))
+    -- Figure out what dimension we're in
+    if baseFilter then
+        if type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
+            originator = baseFilter -- Assume that the filtered entity is the originator, because why would a filter be just one entity if it's not the caller?
+            traceDimension = originator:GetDimension()
+        else
+            --PrintTable(baseFilter)
+            -- Now we need to use the expensive calculation
+            local startpos = traceData.start
+            local traceDir = (traceData.endpos-traceData.start):GetNormalized()
+            
+            local candidates = ents.FindInSphere(startpos,64)
+            if #candidates > 0 then
+                originator = candidates[1]
+                local originatorBestScore = originator:GetForward():Dot(traceDir)
+                for _, candidate in pairs(candidates) do
+                    local thisScore = candidate:GetForward():Dot(traceDir)
+                    if thisScore > originatorBestScore then
+                        originator = candidate
+                        originatorBestScore = thisScore
+                    end
+                    if originatorBestScore > 0.9999 then break end
+                end
+                traceDimension = originator:GetDimension()
+            end
+        end
+    end
+    
+    -- Build new filter
+    local newFilter = nil
+    if baseFilter then
+        if type(baseFilter) == "table" then
+            newFilter = table.Copy(baseFilter)
+            --[[ for k, v in pairs(DimensionTables[traceDimension]) do
+                newFilter[#newFilter+1] = v
+            end ]]
+            for dimensionName, dimensionTable in pairs(DimensionTables) do
+                if dimensionName ~= traceDimension then
+                    for _, v in pairs(dimensionTable) do
+                        newFilter[#newFilter+1] = v
+                    end
+                end
+            end
+            --print("New Filter is a table")
+            --PrintTable(newFilter)
+        elseif type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
+            newFilter = {baseFilter}
+            for dimensionName, dimensionTable in pairs(DimensionTables) do
+                if dimensionName ~= traceDimension then
+                    for _, v in pairs(dimensionTable) do
+                        newFilter[#newFilter+1] = v
+                    end
+                end
+            end
+            --print("New Filter is a table but was made out of an entity ",baseFilter)
+            --PrintTable(newFilter)
+        elseif type(baseFilter) == "function" then
+            newFilter = function(ent)
+                if ent:GetDimension() ~= traceDimension then return false end
+                return baseFilter(ent)
+            end
+            --print("New Filter is a function")
+        end
+    else
+        newFilter = function(ent) 
+            return ent:GetDimension() == traceDimension
+        end
+    end
+    traceData.filter = newFilter
     return baseTraceLine(traceData)
 end
