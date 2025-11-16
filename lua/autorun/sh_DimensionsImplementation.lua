@@ -22,7 +22,6 @@ if SERVER then
             if not IsValid(self) then return end
             if DimensionTables[self:GetDimension()] then
                 DimensionTables[self:GetDimension()][self] = nil
-                print("Removed ",self," from ",DimensionTables[self:GetDimension()])
             end
             self:SetNWString("Dimension",dimension)
 
@@ -65,7 +64,6 @@ if SERVER then
             -- Set dimension value
             if DimensionTables[self:GetDimension()] then
                 DimensionTables[self:GetDimension()][self] = nil
-                print("Removed ",self," from ",DimensionTables[self:GetDimension()])
             end
             self:SetNWString("Dimension",dimension)
 
