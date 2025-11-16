@@ -30,112 +30,8 @@ local function CheckPlayers(self, contact) -- Function used by gmod_wire_target_
 end
  ]]
 
-hook.Add("DISABLED OnEntityCreated","Patch Entities to Account for Dimensions",function(ENT)
-    if ENT:GetClass() == "gmod_wire_ranger" then -- Patching Wiremod Ranger to make it not hit extradimensional entities
-        function ENT:Think()
-            self.BaseClass.Think(self)
-
-            local tracedata = {}
-            tracedata.start = self:GetPos()
-            if self.Inputs.Target.Value ~= vector_origin then
-                tracedata.endpos = self:GetPos()+(self:GetTarget()-self:GetPos()):GetNormalized()*self:GetBeamLength()
-                if tracedata.endpos[1] ~= tracedata.endpos[1] then tracedata.endpos = self:GetPos()+Vector(self:GetBeamLength(), 0, 0) end
-            elseif (self.Inputs.X.Value == 0 and self.Inputs.Y.Value == 0) then
-                tracedata.endpos = tracedata.start + self:GetUp() * self:GetBeamLength()
-            else
-                local skew = Vector(self.Inputs.X.Value, self.Inputs.Y.Value, 1)
-                skew = skew*(self:GetBeamLength()/skew:Length())
-                local beam_x = self:GetRight()*skew.x
-                local beam_y = self:GetForward()*skew.y
-                local beam_z = self:GetUp()*skew.z
-                tracedata.endpos = tracedata.start + beam_x + beam_y + beam_z
-            end
-
-            -- DIMENSION PATCH STARTS HERE
-            tracedata.filter = function(ent)
-                --self.ignore or { self }
-                if not IsValid(ent) then return false end
-                if self.ignore then
-                    if table.HasValue(self.ignore,ent) or ent == self then return false end
-                end
-                if ent == self then return false end
-                
-                if self:GetDimension() ~= ent:GetDimension() then return false end
-                return true
-            end
-            -- DIMENSION PATCH ENDS HERE
-
-            if (self.trace_water) then tracedata.mask = -1 end
-            local trace = util.TraceLine(tracedata)
-            trace.RealStartPos = tracedata.start
-
-            local dist = 0
-            local pos = Vector(0, 0, 0)
-            local vel = Vector(0, 0, 0)
-            local ang = Angle(0, 0, 0)
-            local col = Color(255, 255, 255, 255)
-            local ent = NULL
-            local sid = ""
-            local uid = 0
-            local val = {}
-            local hnrm = Vector(0,0,0)
-
-            if (trace.Hit) then
-                dist = trace.Fraction * self:GetBeamLength()
-                pos = trace.HitPos
-                hnrm = trace.HitNormal
-                ent = trace.Entity
-
-                if (ent:IsValid()) then
-
-                    vel = ent:GetVelocity()
-                    ang = ent:GetAngles()
-                    col = ent:GetColor()
-
-                    if (self.out_sid or self.out_uid) and (ent:IsPlayer()) then
-                        sid = ent:SteamID() or ""
-                        uid = tonumber(ent:UniqueID()) or -1
-                    end
-
-                    if (self.out_val and ent.Outputs) then
-                        local i = 1
-                        for k,v in pairs(ent.Outputs) do
-                            if (v.Value ~= nil and type(v.Value) == "number") then
-                                val[i] = v.Value
-                                i = i + 1
-                            end
-                        end
-                    end
-
-                elseif(self.ignore_world) then
-                    if (trace.HitWorld) then
-                        if (self.default_zero) then
-                            dist = 0
-                        else
-                            dist = self:GetBeamLength()
-                        end
-                        pos = Vector(0,0,0)
-                    end
-                end
-
-            else
-                if (not self.default_zero) then
-                    dist = self:GetBeamLength()
-                end
-            end
-
-            self:TriggerOutput(dist, pos, vel, ang, col, val, sid, uid, ent, hnrm, trace)
-            self:ShowOutput(dist, pos, vel, ang, col, val, sid, uid, ent, hnrm, trace)
-
-            if (self.hires) then
-                self:NextThink(CurTime())
-            else
-                self:NextThink(CurTime()+0.04)
-            end
-
-            return true
-        end
-    elseif ENT:GetClass() == "gmod_wire_target_finder" then
+hook.Add("OnEntityCreated","Patch Entities to Account for Dimensions",function(ENT)
+    if ENT:GetClass() == "gmod_wire_target_finder" then
         function ENT:Think()
             self.BaseClass.Think(self)
 
@@ -244,7 +140,8 @@ hook.Add("DISABLED OnEntityCreated","Patch Entities to Account for Dimensions",f
             WireLib.TriggerOutput( owner, "Entities", self.EntsInside )
         
         end
-    elseif ENT:GetClass() == "glide_missile" then
+    end
+    --[[ elseif ENT:GetClass() == "glide_missile" then
         local ray = {}
         local traceData = {
             output = ray,
@@ -414,7 +311,7 @@ hook.Add("DISABLED OnEntityCreated","Patch Entities to Account for Dimensions",f
         
             return true
         end
-    end
+    end ]]
 end)
 
 -- Patch Glide Turrets
