@@ -53,43 +53,18 @@ end)
 local baseTraceLine = util.TraceLine
 util.TraceLine = function(traceData)
     local baseFilter = traceData.filter
-    local originator = nil
     local traceDimension = DEFAULT_DIMENSION
-    
-    -- Figure out what dimension we're in
-    if baseFilter then
-        if type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
-            originator = baseFilter -- Assume that the filtered entity is the originator, because why would a filter be just one entity if it's not the caller?
-            traceDimension = originator:GetDimension()
-        else
-            -- Now we need to use the expensive calculation
-            local startpos = traceData.start
-            local traceDir = (traceData.endpos-traceData.start):GetNormalized()
-            
-            local candidates = ents.FindInSphere(startpos,64)
-            if #candidates > 0 then
-                originator = nil
-                local originatorBestScore = 0
-                for _, candidate in pairs(candidates) do
-                    if not (IsValid(candidate) and (candidate:GetPhysicsObject():IsValid())) then continue end
-                    local thisScoreForward = traceDir:Dot(candidate:GetForward())
-                    local thisScoreUp = traceDir:Dot(candidate:GetUp())
-                    if thisScoreForward > originatorBestScore then
-                        originator = candidate
-                        originatorBestScore = thisScoreForward
-                    elseif thisScoreUp > originatorBestScore then
-                        originator = candidate
-                        originatorBestScore = thisScoreUp
-                    end
-                    if originatorBestScore > 0.9999 then break end
-                end
-                if originator then
-                    traceDimension = originator:GetDimension()
-                end
-            end
-        end
+
+    local level = 0
+    while debug.getinfo(level) and (debug.getinfo(level) ~= {}) do
+        level = level + 1
     end
-    
+    local key, originator = debug.getlocal(level-1,1)
+    if key == "self" and type(originator) == "Entity" or type(originator) == "Player" then
+        print(originator)
+        traceDimension = originator:GetDimension() or DEFAULT_DIMENSION
+    end
+
     -- Build new filter
     local newFilter = nil
     if baseFilter then
@@ -131,43 +106,18 @@ end
 local baseTraceHull = util.TraceHull
 util.TraceHull = function(traceData)
     local baseFilter = traceData.filter
-    local originator = nil
     local traceDimension = DEFAULT_DIMENSION
-    
-    -- Figure out what dimension we're in
-    if baseFilter then
-        if type(baseFilter) == "Entity" or type(baseFilter) == "Player" then
-            originator = baseFilter -- Assume that the filtered entity is the originator, because why would a filter be just one entity if it's not the caller?
-            traceDimension = originator:GetDimension()
-        else
-            -- Now we need to use the expensive calculation
-            local startpos = traceData.start
-            local traceDir = (traceData.endpos-traceData.start):GetNormalized()
-            
-            local candidates = ents.FindInSphere(startpos,64)
-            if #candidates > 0 then
-                originator = nil
-                local originatorBestScore = 0
-                for _, candidate in pairs(candidates) do
-                    if not (IsValid(candidate) and (candidate:GetPhysicsObject():IsValid())) then continue end
-                    local thisScoreForward = traceDir:Dot(candidate:GetForward())
-                    local thisScoreUp = traceDir:Dot(candidate:GetUp())
-                    if thisScoreForward > originatorBestScore then
-                        originator = candidate
-                        originatorBestScore = thisScoreForward
-                    elseif thisScoreUp > originatorBestScore then
-                        originator = candidate
-                        originatorBestScore = thisScoreUp
-                    end
-                    if originatorBestScore > 0.9999 then break end
-                end
-                if originator then
-                    traceDimension = originator:GetDimension()
-                end
-            end
-        end
+
+    local level = 0
+    while debug.getinfo(level) and (debug.getinfo(level) ~= {}) do
+        level = level + 1
     end
-    
+    local key, originator = debug.getlocal(level-1,1)
+    if key == "self" and type(originator) == "Entity" or type(originator) == "Player" then
+        print(originator)
+        traceDimension = originator:GetDimension() or DEFAULT_DIMENSION
+    end
+
     -- Build new filter
     local newFilter = nil
     if baseFilter then
@@ -203,6 +153,6 @@ util.TraceHull = function(traceData)
         end
     end
     traceData.filter = newFilter
-    
+
     return baseTraceHull(traceData)
 end
