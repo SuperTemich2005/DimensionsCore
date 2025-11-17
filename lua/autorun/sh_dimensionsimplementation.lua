@@ -59,6 +59,7 @@ if SERVER then
                 if (ent == self:GetViewModel(0)) or (ent == self:GetViewModel(1)) or (ent == self:GetViewModel(2)) then continue end
                 if ent == self:GetViewEntity() then continue end
                 if ent == self:GetHands() then continue end
+                if ent:GetClass() == "physgun_beam" and ent:GetOwner() == self then continue end
                 RecursiveSetPreventTransmit(ent,self,self:GetDimension() ~= ent:GetDimension())
             end
             
@@ -155,6 +156,7 @@ if SERVER then
         timer.Simple(0,function()   
             if not IsValid(ent) then return end
             print(ent,"is created!")
+
             if (ent:GetDimension() ~= "") then
                 print("Dimension is already set for ",ent,": ",ent:GetDimension()) 
                 return 
