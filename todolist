@@ -1,9 +1,6 @@
 - Fix TARDIS (find a way to properly propagate dimension value to all interior elements)
 - Fix gmod_wire_trigger not propagating its dimension onto gmod_wire_trigger_entity
 
-- physgun beams stop working when you change dimensions
-- the player is in semi-permanent t-pose (certain actions trigger other animations for a short period of time)
-- weapon:SetDimension isnt a function so switching weapons errors
 - cameras render from the current players dimension instead of the dimension the camera is in (not sure if we can fix this)
 
 - sounds still get played in other dimensions >:(

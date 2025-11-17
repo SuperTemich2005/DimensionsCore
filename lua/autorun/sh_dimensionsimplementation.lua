@@ -15,7 +15,24 @@ function PLY:GetDimension()
     return self:GetNWString("Dimension")
 end
 
+if not CPPI then --if prop protection isnt installed, create CPPIGetOwner so the addon doesnt error
+    function ENT:CPPIGetOwner()
+        return self:GetOwner()
+    end
+end
+
 if SERVER then
+    --function from gmod wiki, makes children stop transmitting, and makes sure the player never un-transmits from itself
+    function RecursiveSetPreventTransmit(ent,ply,stopTransmitting)
+        if (ent ~= ply and IsValid(ent) and IsValid(ply)) then
+            ent:SetPreventTransmit(ply,stopTransmitting)
+            local tab = ent:GetChildren()
+            for i = 1, #tab do
+                RecursiveSetPreventTransmit(tab[i],ply,stopTransmitting)
+            end
+        end
+    end
+
     -- Function to Set Dimension. It will try writing dimension value to given entity and propagate the dimension to connected entities.
     function PLY:SetDimension(dimension)
         timer.Simple(0,function()
@@ -42,12 +59,13 @@ if SERVER then
                 if (ent == self:GetViewModel(0)) or (ent == self:GetViewModel(1)) or (ent == self:GetViewModel(2)) then continue end
                 if ent == self:GetViewEntity() then continue end
                 if ent == self:GetHands() then continue end
-                ent:SetPreventTransmit(self,self:GetDimension() ~= ent:GetDimension())
+                if ent:GetClass() == "physgun_beam" and ent:GetOwner() == self then continue end
+                RecursiveSetPreventTransmit(ent,self,self:GetDimension() ~= ent:GetDimension())
             end
             
             -- Update visibility of this entity to ALL players
             for _, ply in pairs(player.GetAll()) do
-                self:SetPreventTransmit(ply,ply:GetDimension() ~= self:GetDimension())
+                RecursiveSetPreventTransmit(self,ply,ply:GetDimension() ~= self:GetDimension())
             end
             
             if not DimensionTables[dimension] then
@@ -112,7 +130,7 @@ if SERVER then
 
                     -- Update visibility
                     for _, ply in pairs(player.GetAll()) do
-                        v:SetPreventTransmit(ply,ply:GetDimension() ~= v:GetDimension())
+                        RecursiveSetPreventTransmit(v,ply,ply:GetDimension() ~= v:GetDimension())
                     end
 
                     DimensionTables[dimension][v] = true
@@ -126,7 +144,7 @@ if SERVER then
 
             -- Update visibility of this entity to ALL players
             for _, ply in pairs(player.GetAll()) do
-                self:SetPreventTransmit(ply,ply:GetDimension() ~= self:GetDimension())
+                RecursiveSetPreventTransmit(self,ply,ply:GetDimension() ~= self:GetDimension())
             end
 
             DimensionTables[dimension][self] = true
@@ -135,9 +153,10 @@ if SERVER then
     
     -- Hooks for setting dimension to newly created entities
     hook.Add("OnEntityCreated","Assign Dimension Values To Entities",function(ent)
-        timer.Simple(0,function()
+        timer.Simple(0,function()   
             if not IsValid(ent) then return end
             print(ent,"is created!")
+
             if (ent:GetDimension() ~= "") then
                 print("Dimension is already set for ",ent,": ",ent:GetDimension()) 
                 return 
@@ -252,7 +271,6 @@ end
 
 if CLIENT then
     --potentially add DrawPhysgunBeam, EntityFireBullets, GravGunPunt, and PlayerFootstep hooks if they still render from players/entities in other dimensions
-    
     --may need PlayerStartVoice if you can see the hud icon of players in other dimensions using VC
 
     --make players very lonely by preventing them from seeing chat messages from players in other dimensions
@@ -268,7 +286,7 @@ if CLIENT then
     hook.Add("EntityEmitSound", "DimensionCore-ClientSounds", function(tbl)
         local ent = tbl.Entity
 
-        if(ent:GetDimension() ~= LocalPlayer():GetDimension()) then
+        if(IsValid(ent) and ent:GetDimension() ~= LocalPlayer():GetDimension()) then
             return false
         end
     end)
