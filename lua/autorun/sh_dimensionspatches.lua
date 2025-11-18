@@ -60,7 +60,7 @@ util.TraceLine = function(traceData)
         level = level + 1
     end
     local key, originator = debug.getlocal(level-1,1)
-    if key == "self" and type(originator) == "Entity" or type(originator) == "Player" then
+    if key == "self" and type(originator) == "Entity" or type(originator) == "Player" or type(originator) == "Weapon" then
         print(originator)
         traceDimension = originator:GetDimension() or DEFAULT_DIMENSION
     end
