@@ -1,4 +1,4 @@
-hook.Add("DISABLED PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensional Entities",function(ply,oldWeapon,newWeapon)
+--[[ hook.Add("DISABLED PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensional Entities",function(ply,oldWeapon,newWeapon)
     timer.Simple(0,function()
         if newWeapon:GetClass() == "gmod_tool" then
             local weapon = ply:GetTool()
@@ -48,21 +48,37 @@ hook.Add("DISABLED PlayerSwitchWeapon","Modify Toolgun to Not Trace Extradimensi
             end
         end
     end)
-end)
+end) ]]
+
+function dim_GetFunctionCaller()
+    if SERVER then print("Call to dim_GetFunctionCaller") end
+    local level = 0
+    while debug.getinfo(level) and (debug.getinfo(level) ~= {}) do
+        local key, originator = debug.getlocal(level,1)
+        if SERVER then print("Level: ",level,", Key: ",key,", Originator: ",originator) end
+        if key == "self" and type(originator) == "Entity" or type(originator) == "Player" or type(originator) == "Weapon" then
+            if SERVER then print("Originator type seems to check out, returning ",originator) end
+            if originator then return originator end
+        --elseif key == "self" and type(originator) == "table" then
+            --if SERVER then print("The originator is a table somehow? Trying to return originator.entity") end
+            --if originator.entity then return originator.entity end
+        else
+            if SERVER then print("Going up a level.") end
+            level = level + 1
+        end
+    end
+    if SERVER then print("Nothing found...") end
+    return
+end
 
 local baseTraceLine = util.TraceLine
 util.TraceLine = function(traceData)
     local baseFilter = traceData.filter
     local traceDimension = DEFAULT_DIMENSION
 
-    local level = 0
-    while debug.getinfo(level) and (debug.getinfo(level) ~= {}) do
-        level = level + 1
-    end
-    local key, originator = debug.getlocal(level-1,1)
-    if key == "self" and type(originator) == "Entity" or type(originator) == "Player" or type(originator) == "Weapon" then
-        print(originator)
-        traceDimension = originator:GetDimension() or DEFAULT_DIMENSION
+    local originator = dim_GetFunctionCaller()
+    if originator and IsValid(originator) then
+        traceDimension = originator:GetDimension()
     end
 
     -- Build new filter
@@ -108,14 +124,9 @@ util.TraceHull = function(traceData)
     local baseFilter = traceData.filter
     local traceDimension = DEFAULT_DIMENSION
 
-    local level = 0
-    while debug.getinfo(level) and (debug.getinfo(level) ~= {}) do
-        level = level + 1
-    end
-    local key, originator = debug.getlocal(level-1,1)
-    if key == "self" and type(originator) == "Entity" or type(originator) == "Player" then
-        print(originator)
-        traceDimension = originator:GetDimension() or DEFAULT_DIMENSION
+    local originator = dim_GetFunctionCaller()
+    if originator and IsValid(originator) then
+        traceDimension = originator:GetDimension()
     end
 
     -- Build new filter
