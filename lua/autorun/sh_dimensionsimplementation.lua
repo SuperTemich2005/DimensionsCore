@@ -2,6 +2,7 @@ AddCSLuaFile()
 
 DEFAULT_DIMENSION = "overworld"
 DimensionTables = {} -- Key: dimension name. Value: table of entities residing in that dimension.
+DimensionStack = {}
 
 -- Modify Entity Physics and define dimension management-related functions
 local ENT = FindMetaTable("Entity")

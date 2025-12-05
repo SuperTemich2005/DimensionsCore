@@ -372,3 +372,8 @@ FindMetaTable("Player").GetEyeTrace = function(self)
     })
     return trace
 end ]]
+
+local baseCreate = ents.Create
+function ents.Create(class)
+    return baseCreate(class)
+end

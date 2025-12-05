@@ -51,23 +51,23 @@
 end) ]]
 
 function dim_GetFunctionCaller()
-    if SERVER then print("Call to dim_GetFunctionCaller") end
+    --if SERVER then print("Call to dim_GetFunctionCaller") end
     local level = 0
     while debug.getinfo(level) and (debug.getinfo(level) ~= {}) do
         local key, originator = debug.getlocal(level,1)
-        if SERVER then print("Level: ",level,", Key: ",key,", Originator: ",originator) end
+        --if SERVER then print("Level: ",level,", Key: ",key,", Originator: ",originator) end
         if key == "self" and type(originator) == "Entity" or type(originator) == "Player" or type(originator) == "Weapon" then
-            if SERVER then print("Originator type seems to check out, returning ",originator) end
+            --if SERVER then print("Originator type seems to check out, returning ",originator) end
             if originator then return originator end
         --elseif key == "self" and type(originator) == "table" then
             --if SERVER then print("The originator is a table somehow? Trying to return originator.entity") end
             --if originator.entity then return originator.entity end
         else
-            if SERVER then print("Going up a level.") end
+            --if SERVER then print("Going up a level.") end
             level = level + 1
         end
     end
-    if SERVER then print("Nothing found...") end
+    --if SERVER then print("Nothing found...") end
     return
 end
 
@@ -167,3 +167,5 @@ util.TraceHull = function(traceData)
 
     return baseTraceHull(traceData)
 end
+
+
